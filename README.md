@@ -1,147 +1,371 @@
-# BLAST Test Generator
+# 🚀 Local Test Case Generator via Ollama with Kimi
 
-A local LLM-powered test case generator using Ollama. Generate pytest test cases from your Python code without sending data to external APIs.
+A **local LLM-powered** test case generator using **Ollama** and **Llama 3.2**. Generate comprehensive test cases from your Python code or feature descriptions without sending data to external APIs. Your code stays private! 🔒
 
-## Features
+---
 
-- 🔒 **100% Local** - Uses Ollama, no data leaves your machine
-- 🐍 **Python-focused** - Optimized for Python code and pytest
-- ⚡ **Fast** - Leverages local GPU/CPU for generation
-- 📝 **Comprehensive** - Generates normal, edge case, and error tests
-- 📦 **Simple** - Easy CLI interface
+## 📋 Table of Contents
+- [How It Works](#how-it-works)
+- [System Architecture](#system-architecture)
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Project Structure](#project-structure)
+- [Troubleshooting](#troubleshooting)
 
-## Prerequisites
+---
 
-1. **Python 3.8+**
-2. **Ollama** installed and running: [ollama.com](https://ollama.com)
-3. **Code Llama** model (or any code-capable model):
-   ```bash
-   ollama pull codellama
-   ```
+## 🎯 How It Works
 
-## Installation
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         USER INTERACTION                                │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│   User Input                    Web Interface                    AI     │
+│   ┌──────────────┐             ┌──────────────┐            ┌─────────┐ │
+│   │ Python Code  │────────────▶│   Browser    │───────────▶│  LLM    │ │
+│   │ Feature Desc │             │  (Chat UI)   │            │(Ollama) │ │
+│   │ Website URL  │             └──────────────┘            └────┬────┘ │
+│   └──────────────┘                                              │      │
+│                                                                 ▼      │
+│   ┌────────────────────────────────────────────────────────────────┐   │
+│   │              TEST CASE GENERATION PROCESS                       │   │
+│   │  ┌─────────────┐    ┌─────────────┐    ┌─────────────────────┐│   │
+│   │  │ 1. Parse    │───▶│ 2. Build    │───▶│ 3. Generate via LLM ││   │
+│   │  │    Input    │    │   Prompt    │    │    (llama3.2)       ││   │
+│   │  └─────────────┘    └─────────────┘    └─────────────────────┘│   │
+│   │           │                                    │               │   │
+│   │           ▼                                    ▼               │   │
+│   │  ┌─────────────────────────────────────────────────────────┐   │   │
+│   │  │              OUTPUT (Dual Format)                        │   │   │
+│   │  │  ┌────────────────────┐  ┌────────────────────────────┐  │   │   │
+│   │  │  │ Manual Test Cases  │  │   pytest Automation Code   │  │   │   │
+│   │  │  │ • TC_001, TC_002   │  │ • Complete test functions  │  │   │   │
+│   │  │  │ • Steps            │  │ • Assertions               │  │   │   │
+│   │  │  │ • Expected Results │  │ • Fixtures                 │  │   │   │
+│   │  │  └────────────────────┘  └────────────────────────────┘  │   │   │
+│   │  └─────────────────────────────────────────────────────────┘   │   │
+│   └────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### 🔀 Data Flow Diagram
+
+```
+┌──────────────┐     HTTP POST      ┌──────────────┐     HTTP POST     ┌──────────────┐
+│              │ ──────────────────▶│              │──────────────────▶│              │
+│   Browser    │   /api/generate    │ Flask Server │   /api/generate   │    Ollama    │
+│   (User)     │                    │   (Port      │                   │  (Port 11434)│
+│              │◀────────────────── │   5000)      │◀───────────────── │              │
+└──────────────┘    JSON Response    └──────────────┘   JSON Response   └──────────────┘
+                                           │
+                                           │ Local Processing
+                                           ▼
+                                    ┌──────────────┐
+                                    │  Generate    │
+                                    │  Response    │
+                                    │  • Manual TCs│
+                                    │  • pytest    │
+                                    └──────────────┘
+```
+
+---
+
+## 🏗️ System Architecture
+
+### 3-Layer A.N.T. Architecture (BLAST Protocol)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  LAYER 1: PRESENTATION (UI Layer)                               │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌────────────────────────┐    ┌────────────────────────────┐   │
+│  │ Web Interface          │    │ CLI Interface              │   │
+│  │ • chat.html            │    │ • blast_testgen/cli.py     │   │
+│  │ • style.css            │    │ • Command-line args        │   │
+│  │ • chat.js              │    │ • File input handling      │   │
+│  └────────────────────────┘    └────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  LAYER 2: LOGIC (Navigation Layer)                              │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────┐   │
+│  │ Orchestrator     │  │ Code Parser      │  │ Prompts      │   │
+│  │ • Route requests │  │ • AST analysis   │  │ • Templates  │   │
+│  │ • Workflow ctrl  │  │ • Extract funcs  │  │ • LLM format │   │
+│  └──────────────────┘  └──────────────────┘  └──────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  LAYER 3: TOOLS (External Services)                             │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │ Ollama Client                                              │ │
+│  │ • HTTP API calls              ┌──────────────────────────┐ │ │
+│  │ • Retry logic                 │ Local LLM Server         │ │ │
+│  │ • Error handling        ────▶ │ • llama3.2 model         │ │ │
+│  │                               │ • 3.2B parameters        │ │ │
+│  └───────────────────────────────┴──────────────────────────┘ │ │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Component Interaction
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         INPUT TYPES                                  │
+├─────────────────┬─────────────────────┬─────────────────────────────┤
+│ Python Code     │ Feature Description │ Website URL                 │
+│ ─────────────   │ ─────────────────── │ ───────────                 │
+│ def add(a,b):   │ "Registration page  │ app.vwo.com                 │
+│   return a+b    │  with email, pwd"   │                             │
+└────────┬────────┴──────────┬──────────┴────────────┬────────────────┘
+         │                   │                       │
+         └───────────────────┴───────────────────────┘
+                             │
+                             ▼
+              ┌────────────────────────────┐
+              │   Input Classification     │
+              │   • Code detection         │
+              │   • URL pattern match      │
+              │   • Feature analysis       │
+              └────────────┬───────────────┘
+                           │
+           ┌───────────────┼───────────────┐
+           ▼               ▼               ▼
+    ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+    │ Code Tests  │ │ Feature TCs │ │ Website TCs │
+    │ Generator   │ │ Generator   │ │ Generator   │
+    └──────┬──────┘ └──────┬──────┘ └──────┬──────┘
+           │               │               │
+           └───────────────┴───────────────┘
+                           │
+                           ▼
+              ┌────────────────────────────┐
+              │      LLM (Ollama)          │
+              │   ┌────────────────────┐   │
+              │   │  llama3.2:latest   │   │
+              │   │  Local AI Model    │   │
+              │   └────────────────────┘   │
+              └────────────┬───────────────┘
+                           │
+                           ▼
+              ┌────────────────────────────┐
+              │      DUAL OUTPUT           │
+              ├────────────────────────────┤
+              │  Manual Test Cases         │
+              │  ├── TC_001: Positive      │
+              │  ├── TC_002: Negative      │
+              │  └── TC_003: Edge Case     │
+              ├────────────────────────────┤
+              │  pytest Code               │
+              │  ├── import pytest         │
+              │  ├── def test_...()        │
+              │  └── assertions            │
+              └────────────────────────────┘
+```
+
+---
+
+## ✨ Features
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| 🔒 **100% Local** | Uses Ollama, no data leaves your machine | ✅ |
+| 🐍 **Python Code** | Generate tests from Python functions/classes | ✅ |
+| 📝 **Feature Tests** | Generate from plain text descriptions | ✅ |
+| 🌐 **Website Tests** | Generate Selenium tests for URLs | ✅ |
+| 📋 **Manual TCs** | Human-readable test case format | ✅ |
+| 🧪 **pytest Code** | Complete automation code | ✅ |
+| ⚡ **Fast Mode** | Instant generation for simple inputs | ✅ |
+| 🎨 **Web UI** | Beautiful chat interface | ✅ |
+| ⌨️ **CLI** | Command-line interface | ✅ |
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.8+
+- Ollama installed: [ollama.com](https://ollama.com)
+- Llama 3.2 model:
+  ```bash
+  ollama pull llama3.2
+  ```
+
+### Start the Application
 
 ```bash
-# Clone or download this project
-cd blast_testgen
+# Method 1: Using batch file (Windows)
+START.bat
+
+# Method 2: Manual start
+# Terminal 1 - Start Ollama
+ollama serve
+
+# Terminal 2 - Start Web Server
+python deploy.py
+
+# Open browser
+http://localhost:5000
+```
+
+---
+
+## 📦 Installation
+
+```bash
+# Clone repository
+git clone https://github.com/Qais7744/Local-Testcase-Generate-via-the-Ollama-with-kimi.git
+cd Local-Testcase-Generate-via-the-Ollama-with-kimi
 
 # Install dependencies
 pip install -r requirements.txt
 
 # Verify setup
-python -m blast_testgen.cli validate
+python tools/verify_ollama.py
 ```
 
-## Quick Start
+---
 
-### 1. Validate Setup
-```bash
-python -m blast_testgen.cli validate
-```
+## 📝 Usage Examples
 
-### 2. Generate Tests for a Single File
-```bash
-python -m blast_testgen.cli generate my_module.py
-```
+### Example 1: Python Code Input
 
-This creates `tests/test_my_module.py` with generated test cases.
-
-### 3. Generate Tests for Specific Function
-```bash
-python -m blast_testgen.cli generate my_module.py -f calculate_total
-```
-
-### 4. Batch Generate for a Directory
-```bash
-python -m blast_testgen.cli batch src/
-```
-
-## CLI Reference
-
-```
-blast-testgen [--host URL] [--model MODEL] <command>
-
-Commands:
-  validate              Check Ollama setup
-  generate <file>       Generate tests for a file
-    -o, --output        Output path for test file
-    -f, --function      Target specific function
-  batch <directory>     Generate tests for all .py files
-
-Options:
-  --host URL            Ollama host (default: http://localhost:11434)
-  --model MODEL         Model name (default: codellama)
-```
-
-## Architecture
-
-This project follows the **B.L.A.S.T.** protocol with 3-layer A.N.T. architecture:
-
-```
-┌─────────────────────────────────────┐
-│  UI Layer (CLI)                     │
-│  blast_testgen/cli.py               │
-├─────────────────────────────────────┤
-│  Logic Layer (Orchestrator)         │
-│  blast_testgen/orchestrator.py      │
-│  blast_testgen/code_parser.py       │
-│  blast_testgen/prompts.py           │
-├─────────────────────────────────────┤
-│  Tool Layer (Ollama Client)         │
-│  blast_testgen/ollama_client.py     │
-└─────────────────────────────────────┘
-```
-
-## Example
-
-Input (`calculator.py`):
+**Input:**
 ```python
-def add(a, b):
-    """Add two numbers."""
-    return a + b
-
-def divide(a, b):
-    """Divide a by b."""
-    if b == 0:
-        raise ValueError("Cannot divide by zero")
-    return a / b
+def login(username, password):
+    if not username or not password:
+        raise ValueError("Required")
+    return {"token": "abc123"}
 ```
 
-Generated Output (`tests/test_calculator.py`):
+**Output:**
+- **TC_001**: Valid login → Success
+- **TC_002**: Empty fields → Validation error
+- **TC_003**: Invalid format → Error handling
+
 ```python
+# Generated pytest code
 import pytest
-from calculator import add, divide
 
-def test_add_normal():
-    """Test add with normal integer inputs."""
-    assert add(2, 3) == 5
-    assert add(-1, 1) == 0
+def test_login_valid():
+    result = login("user", "pass123")
+    assert result["token"] is not None
 
-def test_add_edge_cases():
-    """Test add with edge cases."""
-    assert add(0, 0) == 0
-    assert add(-5, -5) == -10
-
-def test_divide_normal():
-    """Test divide with valid inputs."""
-    assert divide(10, 2) == 5.0
-    assert divide(7, 2) == 3.5
-
-def test_divide_by_zero():
-    """Test divide raises ValueError on zero."""
-    with pytest.raises(ValueError, match="Cannot divide by zero"):
-        divide(10, 0)
+def test_login_empty():
+    with pytest.raises(ValueError):
+        login("", "")
 ```
 
-## Troubleshooting
+### Example 2: Feature Description
+
+**Input:**
+```
+Registration page with email, password, confirm password
+```
+
+**Output:**
+- Manual test cases with steps
+- Selenium pytest code
+
+### Example 3: Website URL
+
+**Input:**
+```
+app.vwo.com
+```
+
+**Output:**
+- Page load tests
+- Responsive design tests
+- Form validation tests
+- Performance tests
+
+---
+
+## 📁 Project Structure
+
+```
+Local-Testcase-Generate-via-the-Ollama-with-kimi/
+│
+├── 📁 blast_testgen/              # Main Python package
+│   ├── 📁 static/                 # CSS, JS files
+│   │   ├── style.css             # UI styling
+│   │   └── chat.js               # Frontend logic
+│   ├── 📁 templates/              # HTML templates
+│   │   └── chat.html             # Web interface
+│   ├── cli.py                    # Command-line interface
+│   ├── web_app.py                # Flask web server
+│   ├── ollama_client.py          # Ollama API client
+│   ├── orchestrator.py           # Business logic
+│   ├── code_parser.py            # Python code analysis
+│   └── prompts.py                # LLM prompt templates
+│
+├── 📁 architecture/               # SOP documentation
+│   ├── SOP-001-TestGeneration.md
+│   ├── SOP-002-CodeValidation.md
+│   └── SOP-003-OllamaIntegration.md
+│
+├── 📁 tools/                      # Utility scripts
+│   ├── verify_ollama.py          # Connection checker
+│   ├── generate_tests.py         # Standalone generator
+│   └── validate_code.py          # Code validator
+│
+├── 📁 tests/                      # Sample test files
+│
+├── deploy.py                      # Production server
+├── run_web.py                     # Development server
+├── START.bat                      # Windows startup
+├── requirements.txt               # Python dependencies
+├── SETUP_GUIDE.md                 # Detailed setup
+└── README.md                      # This file
+```
+
+---
+
+## 🔧 Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
-| "Ollama is not running" | Run `ollama serve` in a terminal |
-| "Model not found" | Run `ollama pull codellama` |
-| Timeout errors | Reduce file size or increase Ollama timeout |
-| Poor test quality | Try a different model like `deepseek-coder` |
+| "Ollama not running" | Run `ollama serve` in terminal |
+| "Request timed out" | Use shorter input or simpler code |
+| "Model not found" | Run `ollama pull llama3.2` |
+| Port 5000 busy | Change port: `python deploy.py --port 8080` |
+| Slow generation | Input is too complex, try shorter code |
 
-## License
+---
 
-MIT
+## 🤝 Contributing
+
+This project follows the **B.L.A.S.T.** protocol:
+- **B** - Blueprint (Planning)
+- **L** - Link (Connectivity)
+- **A** - Architect (3-layer build)
+- **S** - Stylize (Refinement)
+- **T** - Trigger (Deployment)
+
+---
+
+## 📄 License
+
+MIT License - Feel free to use and modify!
+
+---
+
+## 🙏 Acknowledgments
+
+- [Ollama](https://ollama.com) - Local LLM runtime
+- [Llama 3.2](https://ai.meta.com/llama/) - Meta's open-source LLM
+- [Flask](https://flask.palletsprojects.com) - Web framework
+- [pytest](https://pytest.org) - Testing framework
+
+---
+
+**Made with ❤️ using Local AI (Ollama + Llama 3.2)**
