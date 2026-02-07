@@ -1,6 +1,6 @@
 """Web application for Testcase Generator Chat UI."""
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
 import sys
@@ -10,7 +10,15 @@ import re
 from .ollama_client import OllamaClient
 from .prompts import build_test_prompt
 
-app = Flask(__name__, template_folder='templates', static_folder='static')
+# Check if React build exists
+REACT_BUILD_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'frontend', 'build')
+USE_REACT = os.path.exists(REACT_BUILD_DIR)
+
+if USE_REACT:
+    app = Flask(__name__, static_folder=REACT_BUILD_DIR, static_url_path='')
+else:
+    app = Flask(__name__, template_folder='templates', static_folder='static')
+
 CORS(app)
 
 # Initialize Ollama client
@@ -20,6 +28,20 @@ client = OllamaClient()
 @app.route('/')
 def index():
     """Render the chat UI."""
+    if USE_REACT:
+        return send_from_directory(REACT_BUILD_DIR, 'index.html')
+    return render_template('chat.html')
+
+
+# Serve React static files
+@app.route('/<path:path>')
+def serve_static(path):
+    """Serve static files for React or fallback to templates."""
+    if USE_REACT:
+        file_path = os.path.join(REACT_BUILD_DIR, path)
+        if os.path.exists(file_path):
+            return send_from_directory(REACT_BUILD_DIR, path)
+        return send_from_directory(REACT_BUILD_DIR, 'index.html')
     return render_template('chat.html')
 
 
@@ -432,6 +454,10 @@ def parse_combined_response(text: str) -> dict:
 def run_web_app(host='127.0.0.1', port=5000, debug=False):
     """Run the Flask web application."""
     print(f"Starting Testcase Generator UI")
+    if USE_REACT:
+        print(f"   Using React frontend from: {REACT_BUILD_DIR}")
+    else:
+        print(f"   Using Flask templates (React build not found)")
     print(f"   URL: http://{host}:{port}")
     print(f"   Model: {client.model}")
     print(f"   Press Ctrl+C to stop")
