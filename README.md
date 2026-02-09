@@ -1,47 +1,62 @@
-# Selenium to Playwright Conversion Tool
+# AI Tester Blueprint Projects
 
-This tool uses a local LLM (**Ollama** with **Qwen2.5-Coder 1.5B**) to convert Selenium Java code to **Playwright** (TypeScript or JavaScript).
+This repository contains AI-powered testing tools that run locally using Ollama (Local LLM).
 
-## Features
--   **Local & Private**: Runs entirely on your machine using Ollama.
--   **Fast Conversion**: Powered by the lightweight `qwen2.5-coder:1.5b` model.
--   **Dual Language Support**: Choose between **TypeScript** (Strict Typing) and **JavaScript** (Standard JS).
--   **Clean Output**: Automatically filters out Selenium dependencies and enforces Playwright best practices.
--   **Modern UI**: Dark-themed interface with syntax highlighting and file saving.
+---
 
-## Prerequisites
+## 📁 Projects
 
-1.  **Python 3.8+**: Ensure Python is installed.
-2.  **Ollama**: Download and install from [ollama.com](https://ollama.com).
-3.  **Active Internet Connection**: Required for initial model download.
+### 1. Project1-LocalTestCaseGenerator
 
-## Setup Instructions
+**Description:** A local LLM-powered test case generator using **Ollama** and **Llama 3.2**. Generate comprehensive test cases from your Python code or feature descriptions without sending data to external APIs. Your code stays private! 🔒
 
-### 1. Install Dependencies
-Open a terminal in this directory and run:
-```bash
-pip install -r requirements.txt
-```
+**Key Features:**
+- 🔒 **100% Local** - Uses Ollama, no data leaves your machine
+- 🐍 **Python Code** - Generate tests from Python functions/classes
+- 📝 **Feature Tests** - Generate from plain text descriptions
+- 🌐 **Website Tests** - Generate Selenium tests for URLs
+- 📋 **Dual Output** - Manual test cases + pytest automation code
+- 🎨 **Web UI** - Beautiful chat interface
+- ⌨️ **CLI** - Command-line interface
 
-### 2. Setup AI Model
-Ensure Ollama is running, then pull the model:
-```bash
-ollama pull qwen2.5-coder:1.5b
-```
+**Tech Stack:** Python, Flask, Ollama (Llama 3.2), pytest
 
-### 3. Run the Application
-Start the Flask backend:
-```bash
-python tools/app.py
-```
-You should see output indicating the server is running on `http://localhost:5000`.
+**Location:** [`Project1-LocalTestCaseGenerator/`](./Project1-LocalTestCaseGenerator)
 
-### 4. Access the UI
-Open your web browser and navigate to:
-[http://localhost:5000](http://localhost:5000)
+---
 
-## Usage
-1.  **Select Language**: Choose **TypeScript** or **JavaScript** from the dropdown menu.
-2.  **Input Code**: Paste your **Selenium Java** code into the left text area.
-3.  **Convert**: Click **"Initialize Conversion"**.
-4.  **Save**: Review the output and click the **Save** icon to download the file.
+### 2. Project2-Selenium2playwrightLocalLLM
+
+**Description:** A tool that uses a local LLM (**Ollama** with **Qwen2.5-Coder 1.5B**) to convert **Selenium Java** code to **Playwright** (TypeScript or JavaScript).
+
+**Key Features:**
+- 🔄 **Code Conversion** - Selenium Java → Playwright TS/JS
+- 🏠 **Local & Private** - Runs entirely on your machine using Ollama
+- ⚡ **Fast Conversion** - Powered by lightweight `qwen2.5-coder:1.5b` model
+- 🎯 **Dual Language** - TypeScript (Strict Typing) or JavaScript (Standard JS)
+- 🧹 **Clean Output** - Auto-filters Selenium dependencies, enforces Playwright best practices
+- 🎨 **Modern UI** - Dark-themed interface with syntax highlighting and file saving
+
+**Tech Stack:** Python, Flask, Ollama (Qwen2.5-Coder 1.5B), Playwright
+
+**Location:** [`Project2-Selenium2playwrightLocalLLM/`](./Project2-Selenium2playwrightLocalLLM)
+
+---
+
+## 🚀 Quick Start
+
+Each project has its own setup instructions. Navigate to the respective project folder and follow the README.md inside.
+
+### Prerequisites (Common for both projects)
+- Python 3.8+
+- Ollama installed: [ollama.com](https://ollama.com)
+
+---
+
+## 📄 License
+
+MIT License - Feel free to use and modify!
+
+---
+
+**Made with ❤️ using Local AI (Ollama)**
